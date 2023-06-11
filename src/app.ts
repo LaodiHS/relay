@@ -1,59 +1,34 @@
-import express, { Request, Response } from "express";
-import http from "http";
-import { Server, Socket } from "socket.io";
-import path from "path";
-import fs from "fs";
+import express, { Request, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
+
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
 
-const port: number = 3000;
+app.use(express.json()); // Add this line to parse JSON request bodies
 
-app.use(express.static(path.join(__dirname, "public")));
+app.post('/public', (req: Request, res: Response) => {
+  const fileName = req.body.filePath; // Get the file name from the request body
+  const fileData = req.body.fileData; // Get the file data from the request body
+console.log('directoryPath', fileName);
+  // Specify the file path
+  const filePath = path.join(__dirname, 'public', fileName);
+  const directoryPath = path.dirname(filePath);
 
+  // Create the directory if it doesn't exist
+  fs.mkdirSync(directoryPath, { recursive: true });
 
-app.get("/", (req: Request, res: Response) => {
-  
-      res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-
-app.post("/public", (req: Request, res: Response) => {
-  const files = req.body.files; // Assuming you receive an array of files in the request body
-
-  // Iterate over the files array
-  for (const file of files) {
-    const fileName = file.name; // Get the file name
-    const fileData = file.data; // Get the file data (e.g., Buffer or base64 encoded string)
-
-    const filePath = path.join(__dirname, "public", fileName); // Specify the file path
-
-    // Write the file to the specified path
-    fs.writeFile(filePath, fileData, (err) => {
-      if (err) {
-        console.error("Error writing file:", err);
-      }
-    });
-  }
-
-  res.status(200).send("Files written successfully.");
-});
-
-
-
-io.on("connection", (socket: Socket) => {
-  console.log("A user connected");
-
-  socket.on("disconnect", () => {
-    console.log("A user disconnected");
-  });
-
-  socket.on("chat message", (message: string) => {
-    console.log("Received message:", message);
-    // You can emit events to other clients or perform additional actions here
+  // Write the file to the specified path
+  fs.writeFile(filePath, fileData, (err) => {
+    if (err) {
+      console.error('Error writing file:', err);
+      res.status(500).send('An error occurred while writing the file.');
+    } else {
+      console.log(`File "${fileName}" written successfully.`);
+      res.status(200).send(`File "${fileName}" written successfully.`);
+    }
   });
 });
 
-server.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
 });
