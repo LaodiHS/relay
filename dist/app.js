@@ -6,31 +6,43 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
-const port = process.env.PORT || 3000;
+const multer_1 = __importDefault(require("multer"));
+const port = process.env.PORT || 3001;
 const app = (0, express_1.default)();
+const upload = (0, multer_1.default)();
 app.use(express_1.default.json()); // Add this line to parse JSON request bodies
-app.post('/public', (req, res) => {
-    const fileName = req.body.filePath; // Get the file name from the request body
-    const fileData = req.body.fileData; // Get the file data from the request body
-    console.log('directoryPath', fileName);
-    // Specify the file path
-    const filePath = path_1.default.join(__dirname, 'public', fileName);
-    const directoryPath = path_1.default.dirname(filePath);
-    // Create the directory if it doesn't exist
-    fs_1.default.mkdirSync(directoryPath, { recursive: true });
-    // Write the file to the specified path
-    fs_1.default.writeFile(filePath, fileData, (err) => {
-        if (err) {
-            console.error('Error writing file:', err);
-            res.status(500).send('An error occurred while writing the file.');
-        }
-        else {
-            console.log(`File "${fileName}" written successfully.`);
-            res.status(200).send(`File "${fileName}" written successfully.`);
-        }
-    });
+const publicDirectoryPath = path_1.default.join(__dirname, "public");
+// Default route for all other paths
+app.get("/", (req, res) => {
+    res.sendFile(path_1.default.join(publicDirectoryPath, "index.html"));
 });
-app.get('/directory-contents/:dirname', (req, res) => {
+app.post("/public", upload.single("file"), (req, res) => {
+    const fileName = req.body.fileName; // Get the file name from the request body
+    const fileData = req.body.file; // Get the file data from the request body
+    const filePath = path_1.default.join(__dirname, "public", fileName);
+    const directoryPath = path_1.default.dirname(filePath);
+    fs_1.default.mkdirSync(directoryPath, { recursive: true });
+    const writeStream = fs_1.default.createWriteStream(filePath);
+    writeStream.on("finish", () => {
+        console.log(`File "${fileName}" written successfully.`);
+        res.status(200).send(`File "${fileName}" written successfully.`);
+    });
+    writeStream.on("error", (err) => {
+        console.error("Error writing file:", err);
+        res.status(500).send("An error occurred while writing the file.");
+    });
+    // Write the file data to the writable stream
+    if (fileData) {
+        writeStream.write(fileData, "utf8");
+    }
+    // Pipe the file buffer into the writable stream
+    if (req.file && req.file.buffer) {
+        writeStream.write(req.file.buffer);
+    }
+    // End the writable stream
+    writeStream.end();
+});
+app.get("/directory-contents/:dirname", (req, res) => {
     const { dirname } = req.params;
     const result = [];
     const stack = [dirname];
@@ -44,15 +56,17 @@ app.get('/directory-contents/:dirname', (req, res) => {
                 stack.push(filePath);
             }
             else {
-                const fileData = fs_1.default.readFileSync(filePath, 'utf8');
-                result.push({ filename: file,
-                    //    content: fileData 
+                const fileData = fs_1.default.readFileSync(filePath, "utf8");
+                result.push({
+                    filename: file,
+                    //    content: fileData
                 });
             }
         });
     }
     res.json(result);
 });
+app.get("/");
 app.listen(port, () => {
-    console.log('Server is running on port 3000');
+    console.log("Server is running on port 3001");
 });
