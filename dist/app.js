@@ -11,6 +11,7 @@ const port = process.env.PORT || 3001;
 const app = (0, express_1.default)();
 // const upload = multer();
 app.use(express_1.default.json()); // Add this line to parse JSON request bodies
+app.use(express_1.default.static(path_1.default.join(__dirname, "public")));
 const publicDirectoryPath = path_1.default.join(__dirname, "public");
 // Default route for all other paths
 app.get("/", (req, res) => {
