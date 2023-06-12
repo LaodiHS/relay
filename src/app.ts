@@ -32,6 +32,37 @@ console.log('directoryPath', fileName);
   });
 });
 
+
+app.get('/directory-contents/:dirname', (req, res) => {
+    const { dirname } = req.params;
+  
+    const result:any = [];
+    const stack = [dirname];
+  
+    while (stack.length) {
+      const currentDir: any = stack.pop();
+      const files = fs.readdirSync(currentDir);
+  
+      files.forEach((file) => {
+        const filePath = path.join(currentDir, file);
+        const stat = fs.statSync(filePath);
+  
+        if (stat.isDirectory()) {
+          stack.push(filePath);
+        } else {
+          const fileData = fs.readFileSync(filePath, 'utf8');
+
+          result.push({ filename: file, 
+        //    content: fileData 
+        });
+        }
+      });
+    }
+  
+    res.json(result);
+  });
+
+
 app.listen(port, () => {
   console.log('Server is running on port 3000');
 });

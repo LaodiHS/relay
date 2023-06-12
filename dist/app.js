@@ -30,6 +30,17 @@ app.post('/public', (req, res) => {
         }
     });
 });
+app.get('/file-contents/:filename', (req, res) => {
+    const { filename } = req.params;
+    fs_1.default.readFile(filename, 'utf8', (err, data) => {
+        if (err) {
+            // Handle error if the file doesn't exist or there was an error reading it
+            return res.status(500).json({ error: 'Error reading file' });
+        }
+        // Return the file contents as the response
+        res.send(data);
+    });
+});
 app.listen(port, () => {
     console.log('Server is running on port 3000');
 });
