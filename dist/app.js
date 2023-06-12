@@ -30,16 +30,28 @@ app.post('/public', (req, res) => {
         }
     });
 });
-app.get('/file-contents/:filename', (req, res) => {
-    const { filename } = req.params;
-    fs_1.default.readFile(filename, 'utf8', (err, data) => {
-        if (err) {
-            // Handle error if the file doesn't exist or there was an error reading it
-            return res.status(500).json({ error: 'Error reading file' });
-        }
-        // Return the file contents as the response
-        res.send(data);
-    });
+app.get('/directory-contents/:dirname', (req, res) => {
+    const { dirname } = req.params;
+    const result = [];
+    const stack = [dirname];
+    while (stack.length) {
+        const currentDir = stack.pop();
+        const files = fs_1.default.readdirSync(currentDir);
+        files.forEach((file) => {
+            const filePath = path_1.default.join(currentDir, file);
+            const stat = fs_1.default.statSync(filePath);
+            if (stat.isDirectory()) {
+                stack.push(filePath);
+            }
+            else {
+                const fileData = fs_1.default.readFileSync(filePath, 'utf8');
+                result.push({ filename: file,
+                    //    content: fileData 
+                });
+            }
+        });
+    }
+    res.json(result);
 });
 app.listen(port, () => {
     console.log('Server is running on port 3000');
