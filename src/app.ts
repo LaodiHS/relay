@@ -9,8 +9,6 @@ const app = express();
 // const upload = multer();
 app.use(express.json()); // Add this line to parse JSON request bodies
 
-
-
 const publicDirectoryPath = path.join(__dirname, "public");
 
 // Default route for all other paths
@@ -82,10 +80,7 @@ app.get("/directory-contents/:dirname", (req, res) => {
   res.json(result);
 });
 
-
 app.get("/");
-
-
 
 app.listen(port, () => {
   console.log("Server is running on port 3001");
